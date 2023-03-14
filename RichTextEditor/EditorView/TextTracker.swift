@@ -31,12 +31,9 @@ class TextTracker {
         }
         return .change
     }
-    enum EditType {
-        case delete, add, change
-    }
     
     var changedLines: [ModifiedLine] {
-        if !changeHappen { fatalError("Not allowed to access this property while current registered change is not up-to-date") }
+//        if !changeHappen { fatalError("Not allowed to access this property while current registered change is not up-to-date") }
         
         if changeType == .add {
             let newLines = currentText.contentLines(inRange: newTextRange)
@@ -57,10 +54,11 @@ class TextTracker {
         }
         
         let newLines = currentText.contentLines(inRange: newTextRange)
-        let oldText = lastText.attributedSubstring(from: changeRange)
-        let fullOldLine = EditorLine(text: oldText, range: changeRange)
+        let oldLines = lastText.contentLines(inRange: changeRange)
+        let allOldLinesRange = NSRange(location: oldLines.first!.range.location, endLocation: oldLines.last!.range.endLocation)
+        let allOldLines = EditorLine(text: lastText.attributedSubstring(from: allOldLinesRange), range: allOldLinesRange)
         return newLines.map { newLine in
-            ModifiedLine(new: newLine, old: fullOldLine)
+            ModifiedLine(new: newLine, old: allOldLines)
         }
     }
     

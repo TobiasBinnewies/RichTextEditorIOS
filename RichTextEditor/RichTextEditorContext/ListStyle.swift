@@ -8,12 +8,13 @@
 import Foundation
 import UIKit
 
-enum IndentMode {
+public enum IndentMode {
     case indent, outdent
 }
 
 extension RichTextEditorContext {
-    func styleList(sequence: [SequenceGenerator], inRange: NSRange? = nil) {
+    public func styleList(sequence: [SequenceGenerator], inRange: NSRange? = nil) {
+        guard editor.inFocus else { return }
         let allLinesInRange = editor.attributedText.contentLines(inRange: inRange ?? editor.selectedRange)
         guard !allLinesInRange.isEmpty else { return }
         var fullRange = NSRange(location: allLinesInRange.first!.range.location, endLocation: allLinesInRange.last!.range.endLocation)
@@ -24,7 +25,8 @@ extension RichTextEditorContext {
         toggleListAttribute(listItem: ListItem(indentLvl: 1, symbols: sequence), inRange: fullRange)
     }
     
-    func styleListIndent(mode: IndentMode, inRange: NSRange? = nil) {
+    public func styleListIndent(mode: IndentMode, inRange: NSRange? = nil) {
+        guard editor.inFocus else { return }
         let allLinesInRange = editor.attributedText.contentLines(inRange: inRange ?? editor.selectedRange)
         guard !allLinesInRange.isEmpty else { return }
         for line in allLinesInRange {
@@ -44,24 +46,38 @@ extension RichTextEditorContext {
     func toggleListAttribute(listItem: ListItem?, inRange range: NSRange) {
         let selectedText = editor.attributedText.attributedSubstring(from: range)
         
-        let areAttributesFullActiveInSelectedText: Bool = {
-            guard let listItem = listItem else { return true }
-            let allActiveAttributes = selectedText.getActiveAttributes()!
-            if let activeAttributeValue = allActiveAttributes[.listItem] as? ListItem, activeAttributeValue == listItem {
-                return true
-            }
-            return false
-        }()
+        var listAction: EditType = .delete
+        var currentListItem: ListItem! = nil
         
-        if !areAttributesFullActiveInSelectedText {
+        if let listItem = listItem {
+            let allActiveAttributes = selectedText.getActiveAttributes()!
+            if let activeAttributeValue = allActiveAttributes[.listItem] as? ListItem {
+                currentListItem = activeAttributeValue
+                if activeAttributeValue != listItem {
+                    listAction = .change
+                }
+            } else {
+                listAction = .add
+            }
+        }
+        
+        switch listAction {
+        case .change:
+            currentListItem.symbols = listItem!.symbols
+            editor.append(NSAttributedString())
+            editor.handleListLineChanges()
+        case .add:
             setListItem(item: listItem!, in: range)
-        } else {
+        case .delete:
             removeListItem(in: range)
         }
         editor.attributedText.enumerateAttribute(.paragraphStyle, in: range, options: .longestEffectiveRangeNotRequired) { attrValue, range, _ in
-            if !areAttributesFullActiveInSelectedText {
+            switch listAction {
+            case .change:
+                return
+            case .add:
                 setParagraphStyle(in: range, indentLevel: 1)
-            } else {
+            case .delete:
                 removeParagraphStyle(in: range)
             }
         }

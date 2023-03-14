@@ -82,21 +82,21 @@ class EditorLine: Equatable {
 class ModifiedLine: EditorLine {
     let oldLine: EditorLine
     
-    override var listItem: ListItem? {
+    var combinedListItem: ListItem? {
         if let listItem = super.listItem {
             return listItem
         }
         return oldLine.listItem
     }
     
-    override var paraStyle: NSParagraphStyle? {
+    var combinedParaStyle: NSParagraphStyle? {
         if let paraStyle = super.paraStyle {
             return paraStyle
         }
         return oldLine.paraStyle
     }
     
-    override var isListLine: Bool {
+    var combinedIsListLine: Bool {
         if super.isListLine {
             return true
         }

@@ -11,14 +11,28 @@ import SwiftUI
 public struct RichTextEditor: UIViewControllerRepresentable {
     let context: RichTextEditorContext
     let isWriteEnable: Bool
+    let initialText: NSAttributedString
+    let bodyFontSize: CGFloat?
+    let onChange: ((NSAttributedString)->Void)
     
-    public init(context: RichTextEditorContext, writeEnabled: Bool = true) {
+    public init(initialText: NSAttributedString, context: RichTextEditorContext, onChange: @escaping ((NSAttributedString)->Void)) {
+        self.initialText = initialText
         self.context = context
-        self.isWriteEnable = writeEnabled
+        self.isWriteEnable = true
+        self.bodyFontSize = nil
+        self.onChange = onChange
+    }
+    
+    public init(text: NSAttributedString, context: RichTextEditorContext, bodyFontSize: CGFloat? = nil) {
+        self.initialText = text
+        self.context = context
+        self.isWriteEnable = false
+        self.bodyFontSize = bodyFontSize
+        self.onChange = {_ in}
     }
     
     public func makeUIViewController(context: Context) -> EditorViewController {
-        return EditorViewController(context: self.context, writeEnabled: isWriteEnable)
+        return EditorViewController(initialText: initialText, context: self.context, writeEnabled: isWriteEnable, bodyFontSize: bodyFontSize, onChange: onChange)
     }
     
     public func updateUIViewController(_ uiViewController: EditorViewController, context: Context) {
@@ -32,9 +46,13 @@ public struct RichTextEditor: UIViewControllerRepresentable {
 
 public class EditorViewController: UIViewController {
     let editor: EditorView
+    let bodyFontSize: CGFloat?
+    let initialText: NSAttributedString
     
-    public init(context: RichTextEditorContext, writeEnabled: Bool) {
-        self.editor = EditorView(context: context, writeEnabled: writeEnabled)
+    public init(initialText: NSAttributedString, context: RichTextEditorContext, writeEnabled: Bool, bodyFontSize: CGFloat?, onChange: @escaping ((NSAttributedString)->Void)) {
+        self.editor = EditorView(initalText: initialText, context: context, writeEnabled: writeEnabled, onChange: onChange)
+        self.initialText = initialText
+        self.bodyFontSize = bodyFontSize
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -52,6 +70,10 @@ public class EditorViewController: UIViewController {
     private func setup() {
         editor.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(editor)
+        
+        if let bodyFontSize = bodyFontSize {
+            editor.attributedText = setFontSizeForText(text: initialText, fontSize: bodyFontSize)
+        }
         
         //        editor.isEditable = writeEnabled
         //        editor.isSelectable = writeEnabled
@@ -74,5 +96,21 @@ public class EditorViewController: UIViewController {
             editor.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.heightAnchor),
         ])
         
+    }
+    
+    private func setFontSizeForText(text: NSAttributedString, fontSize: CGFloat) -> NSAttributedString {
+        let text = NSMutableAttributedString(attributedString: text)
+        let fontSizeRatio = fontSize / UIFont.preferredFont(forTextStyle: .body).pointSize
+        text.enumerateAttribute(.font, in: text.fullRange) { value, range, _ in
+            guard let value = value as? UIFont else { return }
+            let newSize = UIFont.preferredFont(forTextStyle: value.textStyle).pointSize * fontSizeRatio
+            var traits = value.traits
+            if value.textStyle == .headline {
+                traits.insert(.traitBold)
+            }
+            let newValue = value.withSize(newSize).adding(trait: traits)
+            text.addAttributes([.font: newValue], range: range)
+        }
+        return text
     }
 }

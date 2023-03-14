@@ -57,19 +57,19 @@ enum KeyboardKeys {
 
 extension RichTextEditorContext {
     func handleKeyboardInput(key: KeyboardKeys, currentLine: EditorLine) {
-        guard currentLine.isListLine else { return }
+        guard currentLine.isListLine, editor.inFocus else { return }
         switch key {
         case .enter:
             toggleListAttribute(listItem: nil, inRange: currentLine.range)
             return
         case .tab:
-            return
+            styleListIndent(mode: .indent)
         case .backspace:
             toggleListAttribute(listItem: nil, inRange: currentLine.range)
         case .shiftEnter:
             return
         case .shiftTab:
-            return
+            styleListIndent(mode: .indent)
         case .commandB:
             styleText(style: .bold)
         case .commandI:

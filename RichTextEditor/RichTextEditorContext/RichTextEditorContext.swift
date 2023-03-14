@@ -12,8 +12,6 @@ import SwiftUI
 public class RichTextEditorContext: NSObject, UITextViewDelegate {
     weak var editor: EditorView!
     let updateToolbarAttributes: ((ToolbarSelection)->Void)
-    let onChange: ((NSAttributedString) -> Void)
-    let text: NSAttributedString
     let defaultParaStyle: NSParagraphStyle = {
         let paraStyle = NSMutableParagraphStyle()
         paraStyle.firstLineHeadIndent = 0
@@ -27,10 +25,18 @@ public class RichTextEditorContext: NSObject, UITextViewDelegate {
     ]
     var listIntentionalDelete: Bool = false
     
-    public init(text: NSAttributedString, updateToolbarAttributes: @escaping ((ToolbarSelection)->Void), onChange: @escaping ((NSAttributedString)->Void)) {
+    public var inFocus: Bool {
+        get {
+            guard editor != nil else { return false }
+            return editor.inFocus
+        }
+        set {
+            editor.inFocus = newValue
+        }
+    }
+    
+    public init(updateToolbarAttributes: @escaping ((ToolbarSelection)->Void)) {
         self.updateToolbarAttributes = updateToolbarAttributes
-        self.onChange = onChange
-        self.text = text
     }
     
     public func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
@@ -64,12 +70,8 @@ public class RichTextEditorContext: NSObject, UITextViewDelegate {
         editor.handleUIChange()
     }
     
-    func focus(_ focus: Bool) {
-        if focus {
-            editor.becomeFirstResponder()
-            return
-        }
-        editor.resignFirstResponder()
-        updateToolbarAttributes(ToolbarSelection())
+    public func setText(_ text: NSAttributedString) {
+        guard editor != nil else { return }
+        editor.attributedText = text
     }
 }

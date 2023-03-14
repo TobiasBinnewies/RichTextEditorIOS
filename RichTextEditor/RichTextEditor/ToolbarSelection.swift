@@ -10,16 +10,21 @@ import SwiftUI
 import UIKit
 
 public struct ToolbarSelection {
-    var textStyles: [StyleAttribute : Bool] = [
+    public var textStyles: [StyleAttribute : Bool] = [
         .bold: false,
         .italic: false,
         .strikethrough: false,
         .underline: false
     ]
-    var selectedList: ListItem? = nil
-    var fontStyle: UIFont.TextStyle? = nil
-    var isUndoAvailable: Bool = false
-    var isRedoAvailable: Bool = false
+    public var selectedList: ListItem? = nil
+    public var fontStyle: UIFont.TextStyle? = nil
+    public var isUndoAvailable: Bool = false
+    public var isRedoAvailable: Bool = false
+    public var inFocus: Bool = false
+    
+    public init() {
+        
+    }
 }
 
 public enum StyleAttribute: CaseIterable {

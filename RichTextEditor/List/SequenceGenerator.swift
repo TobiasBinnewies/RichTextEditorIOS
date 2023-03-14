@@ -125,7 +125,7 @@ public class SequenceGenerator: NSObject, NSSecureCoding {
         return .string(NSAttributedString(string: text, attributes: [.font: font]))
     }
     
-    static func ==(_ lhs: SequenceGenerator, _ rhs: SequenceGenerator) -> Bool {
+    public static func ==(_ lhs: SequenceGenerator, _ rhs: SequenceGenerator) -> Bool {
         return lhs.withBraces == rhs.withBraces &&
             lhs.count == rhs.count &&
             lhs.sequence == rhs.sequence

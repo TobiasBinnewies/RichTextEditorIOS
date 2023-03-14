@@ -37,7 +37,6 @@ class LayoutManager: NSLayoutManager {
         textStorage.enumerateAttribute(.listItem, in: textStorage.fullRange) { listItem, listRange, _ in
             guard let listItem = listItem as? ListItem else { return }
             drawListMarkers(textStorage: textStorage, listRange: listRange, attributeValue: listItem)
-            // WARN: Could not work!! (To reset the counters for every list
             counters = [:]
         }
         editorView.handleTextChange()

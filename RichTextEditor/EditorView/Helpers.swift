@@ -51,7 +51,7 @@ extension EditorView {
         guard selectedRange.length == 0 else { fatalError("selectedRange.length has to be 0 at this point") }
         let currentLocation = selectedRange.location
         
-        if currentLocation < oldRange.location { return }
+        if currentLocation <= oldRange.location { return }
         
         let newLocation = currentLocation + (changedRange.length - oldRange.length)
         selectedRange = NSRange(location: newLocation, length: 0)

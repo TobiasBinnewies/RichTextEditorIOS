@@ -38,5 +38,5 @@ extension Character {
     /// Zero width space - used for laying out the list bullet/number in an empty line.
     /// This is required when using tab on a blank bullet line. Without this, layout calculations are not performed.
     static let blankLineFiller: Character = "X"
-        //"\u{200B}"
+    //"\u{200B}"
 }

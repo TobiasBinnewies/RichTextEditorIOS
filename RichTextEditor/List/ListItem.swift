@@ -37,7 +37,7 @@ public class ListItem: NSObject, NSSecureCoding {
     }
     
     var indentLvl: Int
-    var symbols: [SequenceGenerator]
+    public var symbols: [SequenceGenerator]
     var nextItem: ListItem?
     
     init(indentLvl: Int, symbols: [SequenceGenerator], nextItem: ListItem? = nil) {
@@ -71,5 +71,9 @@ public class ListItem: NSObject, NSSecureCoding {
         return lhs.indentLvl == rhs.indentLvl &&
             lhs.symbols.elementsEqual(rhs.symbols, by: { $0 == $1 })  &&
             lhs.nextItem == rhs.nextItem
+    }
+    
+    static func !=(_ lhs: ListItem, _ rhs: ListItem) -> Bool {
+        return !(lhs == rhs)
     }
 }

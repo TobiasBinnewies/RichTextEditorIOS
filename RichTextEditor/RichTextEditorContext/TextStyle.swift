@@ -9,7 +9,8 @@ import Foundation
 import UIKit
 
 extension RichTextEditorContext {
-    func styleText(style: StyleAttribute) {
+    public func styleText(style: StyleAttribute) {
+        guard editor.inFocus else { return }
         switch style {
         case .bold:
             toggleFontTraint(trait: .traitBold, inRange: editor.selectedRange)
@@ -22,7 +23,8 @@ extension RichTextEditorContext {
         }
     }
     
-    func styleFont(style: UIFont.TextStyle) {
+    public func styleFont(style: UIFont.TextStyle) {
+        guard editor.inFocus else { return }
         toggleAttribute(attribute: (key: .font, value: UIFont.preferredFont(forTextStyle: style)), inRange: editor.selectedRange)
     }
     

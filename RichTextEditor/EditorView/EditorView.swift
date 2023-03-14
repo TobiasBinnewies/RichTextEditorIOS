@@ -15,6 +15,7 @@ class EditorView: AutogrowingTextView {
 //    let richTextStorageObserver: TextStorageObserver
     let richTextStorage = NSTextStorage()
     let textTracker = TextTracker()
+    let onChange: ((NSAttributedString)->Void)
     var inInit: Bool = true
     
     
@@ -31,6 +32,31 @@ class EditorView: AutogrowingTextView {
     
     var currentContentLine: EditorLine {
         attributedText.currentContentLine(from: selectedRange.location)!
+    }
+    
+    var inFocus: Bool {
+        get {
+            isFirstResponder
+        }
+        set {
+            if newValue {
+                becomeFirstResponder()
+                return
+            }
+            resignFirstResponder()
+        }
+    }
+    
+    override func becomeFirstResponder() -> Bool {
+        let result = super.becomeFirstResponder()
+        handleToolbar()
+        return result
+    }
+    
+    override func resignFirstResponder() -> Bool {
+        let result = super.resignFirstResponder()
+        handleToolbar()
+        return result
     }
     
     override var keyCommands: [UIKeyCommand]? {
@@ -64,9 +90,10 @@ class EditorView: AutogrowingTextView {
         richTextEditorContext.handleKeyboardInput(key: key, currentLine: currentContentLine)
     }
     
-    init(context: RichTextEditorContext, writeEnabled: Bool) {
+    init(initalText: NSAttributedString, context: RichTextEditorContext, writeEnabled: Bool, onChange: @escaping ((NSAttributedString)->Void)) {
         self.isWriteEnabled = writeEnabled
         self.richTextEditorContext = context
+        self.onChange = onChange
 //        self.richTextStorageObserver = TextStorageObserver(textTracker: textTracker)
         let textContainer = NSTextContainer()
         let layoutManager = LayoutManager()
@@ -79,7 +106,7 @@ class EditorView: AutogrowingTextView {
             self.isSelectable = false
             self.isEditable = false
         }
-        attributedText = context.text
+        attributedText = initalText
         self.delegate = context
         self.textTracker.editor = self
         layoutManager.editorView = self
@@ -99,17 +126,13 @@ class EditorView: AutogrowingTextView {
     }
     
     func handleListLineChanges() {
-        // Remove LineFiller if line is not empty
-        if currentContentLine.text.string.contains(Character.blankLineFiller), (currentContentLine.range.length > 1 || !currentContentLine.isListLine) {
-            let blankCharLocations = currentContentLine.text.string[Character.blankLineFiller]
-            blankCharLocations.reversed().forEach { location in
-                removeCharacters(in: NSRange(location: currentContentLine.range.location + location, length: 1))
-            }
-        }
-        
         textTracker.changedLines.forEach { changedLine in
-            guard let listItem = changedLine.listItem, let paraStyle = changedLine.paraStyle else { return }
+            guard let listItem = changedLine.combinedListItem, let paraStyle = changedLine.combinedParaStyle else { return }
 
+            if !changedLine.isListLine, !richTextEditorContext.listIntentionalDelete {
+                addAttribute(.listItem, value: listItem, range: changedLine.range)
+            }
+            
             // Insert LineFiller if line is empty
             if changedLine.range.length == 0, !richTextEditorContext.listIntentionalDelete {
                 var attributes = typingAttributes
@@ -119,6 +142,14 @@ class EditorView: AutogrowingTextView {
                 return
             }
         }
+        
+        // Remove LineFiller if line is not empty
+        if currentContentLine.text.string.contains(Character.blankLineFiller), (currentContentLine.range.length > 1 || !currentContentLine.isListLine) {
+            let blankCharLocations = currentContentLine.text.string[Character.blankLineFiller]
+            blankCharLocations.reversed().forEach { location in
+                removeCharacters(in: NSRange(location: currentContentLine.range.location + location, length: 1))
+            }
+        }
         handleToolbar()
     }
     
@@ -126,7 +157,7 @@ class EditorView: AutogrowingTextView {
         guard isWriteEnabled else { return }
         handleTypingAttributes()
         handleToolbar()
-        richTextEditorContext.onChange(attributedText)
+        onChange(attributedText)
     }
     
     func handleUIChange() {
@@ -159,7 +190,12 @@ class EditorView: AutogrowingTextView {
     }
     
     private func handleToolbar() {
-        guard isWriteEnabled, isFirstResponder else { return }
+        guard isWriteEnabled, inFocus else {
+            if !inInit {
+                richTextEditorContext.updateToolbarAttributes(ToolbarSelection())
+            }
+            return
+        }
         var toolbarSelection = ToolbarSelection()
         let selectedAttributes = selectedAttributes
         
@@ -186,6 +222,8 @@ class EditorView: AutogrowingTextView {
         if let style = selectedAttributes[.strikethroughStyle] as? Int {
             toolbarSelection.textStyles[.strikethrough] = (style == NSUnderlineStyle.single.rawValue)
         }
+        
+        toolbarSelection.inFocus = inFocus
         
         richTextEditorContext.updateToolbarAttributes(toolbarSelection)
     }
