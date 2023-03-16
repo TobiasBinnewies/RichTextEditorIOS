@@ -74,4 +74,12 @@ public class RichTextEditorContext: NSObject, UITextViewDelegate {
         guard editor != nil else { return }
         editor.attributedText = text
     }
+    
+    public func undo() {
+        editor.textTracker.undo()
+    }
+    
+    public func redo() {
+        editor.textTracker.redo()
+    }
 }

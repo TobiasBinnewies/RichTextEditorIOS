@@ -45,6 +45,7 @@ extension RichTextEditorContext {
                 editor.richTextStorage.addAttribute(.font, value: fontToApply, range: range)
             }
         }
+        editor.textTracker.registerStyleChange()
     }
     
     private func toggleAttribute(attribute: (key: NSAttributedString.Key, value: Any), inRange range: NSRange) {
@@ -82,5 +83,6 @@ extension RichTextEditorContext {
                 editor.richTextStorage.removeAttribute(attribute.key, range: range)
             }
         }
+        editor.textTracker.registerStyleChange()
     }
 }

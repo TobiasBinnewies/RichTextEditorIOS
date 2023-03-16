@@ -8,49 +8,70 @@
 import Foundation
 import UIKit
 
-enum KeyboardKeys {
-    case enter, shiftEnter, tab, shiftTab, backspace, commandB, commandI, commandU, commandO
+enum KeyboardKeys: CaseIterable {
+    case enter, shiftEnter, tab, shiftTab, backspace, commandB, commandI, commandU, commandO, commandZ, commandY
     
     init?(string: String, modifierFlags: UIKeyModifierFlags) {
-        switch string {
-        case "\t":
-            if modifierFlags.isEmpty {
-                self = .tab
+        for key in KeyboardKeys.allCases {
+            if key.getString() == string && key.getModifiers() == modifierFlags {
+                self = key
                 return
             }
-            self = .shiftTab
-        case "\n", "\r":
-            if modifierFlags.isEmpty {
-                self = .enter
-                return
-            }
-            self = .shiftEnter
-        case "b":
-            if modifierFlags.contains(.command) {
-                self = .commandB
-                return
-            }
-            return nil
-        case "i":
-            if modifierFlags.contains(.command) {
-                self = .commandI
-                return
-            }
-            return nil
-        case "u":
-            if modifierFlags.contains(.command) {
-                self = .commandU
-                return
-            }
-            return nil
-        case "o":
-            if modifierFlags.contains(.command) {
-                self = .commandO
-                return
-            }
-            return nil
-        default:
-            return nil
+        }
+        return nil
+    }
+    
+    func getString() -> String {
+        switch self {
+        case .enter:
+            return "\n"
+        case .shiftEnter:
+            return "\r"
+        case .tab:
+            return "\t"
+        case .shiftTab:
+            return "\t"
+        case .backspace:
+            return ""
+        case .commandB:
+            return "b"
+        case .commandI:
+            return "i"
+        case .commandU:
+            return "u"
+        case .commandO:
+            return "o"
+        case .commandY:
+            return "y"
+        case .commandZ:
+            return "z"
+        }
+    }
+    
+    func getModifiers() -> UIKeyModifierFlags {
+        switch self {
+        case .enter:
+            return []
+        case .shiftEnter:
+            return .shift
+        case .tab:
+            return []
+        case .shiftTab:
+            return .shift
+        case .backspace:
+            return []
+        case .commandB:
+            return .command
+        case .commandI:
+            return .command
+        case .commandU:
+            return .command
+        case .commandO:
+            return .command
+        case .commandY:
+            return .command
+        case .commandZ:
+            return .command
         }
     }
 }
@@ -78,6 +99,10 @@ extension RichTextEditorContext {
             styleText(style: .underline)
         case .commandO:
             styleText(style: .strikethrough)
+        case .commandZ:
+            editor.textTracker.undo()
+        case .commandY:
+            editor.textTracker.redo()
         }
     }
 }

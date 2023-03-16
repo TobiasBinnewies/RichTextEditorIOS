@@ -22,6 +22,16 @@ class TextTracker {
         NSRange(location: changeRange.location, length: newText.count)
     }
     
+    private var textHistory: [NSAttributedString] = []
+    private var textHistoryPointer: Int = -1
+    private var textHistoryLastEditType: EditType = .change
+    var undoAvailable: Bool {
+        textHistoryPointer > 0
+    }
+    var redoAvailable: Bool {
+        textHistoryPointer < textHistory.count-1
+    }
+    
     var changeType: EditType {
         if changeRange.length == 0 {
             return .add
@@ -76,7 +86,71 @@ class TextTracker {
         self.changeHappen = true
 //        self.currentText = text
         self.newAttributedText = text.attributedSubstring(from: changeRange.fitInRange(text.fullRange))
+        appendTextHistory(changeType: self.changeType, changedText: self.newText)
     }
+    
+    func registerStyleChange() {
+        appendTextHistory(changeType: .style, changedText: nil)
+    }
+    
+    func undo() {
+        guard undoAvailable else { return }
+        let newPointer = self.textHistoryPointer - 1
+        editor.attributedText = self.textHistory[newPointer]
+        self.textHistoryPointer = newPointer
+        editor.handleTextChange()
+    }
+    
+    func redo() {
+        guard redoAvailable else { return }
+        let newPointer = self.textHistoryPointer + 1
+        editor.attributedText = self.textHistory[newPointer]
+        self.textHistoryPointer = newPointer
+        editor.handleTextChange()
+    }
+    
+    func appendTextHistory(changeType: EditType, changedText: String?) {
+        self.textHistory.removeLast(self.textHistory.count-self.textHistoryPointer-1)
+        
+        let lastChangeType = self.textHistoryLastEditType
+        self.textHistoryLastEditType = changeType == .add && (changedText == " " || changedText == "\n") ? .initinal : changeType
+        if (changeType == .add || changeType == .delete), changeType == lastChangeType  {
+            self.textHistory[self.textHistory.count-1] = self.currentText
+            self.textHistoryPointer = self.textHistory.count-1
+            return
+        }
+        self.textHistory.append(self.currentText)
+        self.textHistoryPointer = self.textHistory.count-1
+        return
+    }
+    
+//    private func getNextTextHistoryStep(isUndo: Bool) -> Int {
+//        var pointer = self.textHistoryPointer
+//        var changeType: EditType? = isUndo ? self.textHistory[pointer].changeType : nil
+//
+//        while true {
+//            pointer += isUndo ? -1 : 1
+//            if pointer < 0 {
+//                return 0
+//
+//            }
+//            if pointer >= self.textHistory.count {
+//                return self.textHistory.count-1
+//
+//            }
+//            guard let changeType = changeType else {
+//                changeType = self.textHistory[pointer].changeType
+//                continue
+//            }
+//            if changeType == .initinal {
+//                changeType = self.textHistory[pointer].changeType
+//                continue
+//            }
+//            if self.textHistory[pointer].changeType != changeType {
+//                return pointer
+//            }
+//        }
+//    }
     
 //    private func getTextChanges() {
 //        if lastSelection.length == 0 {

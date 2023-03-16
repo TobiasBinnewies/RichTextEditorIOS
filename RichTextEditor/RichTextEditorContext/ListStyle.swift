@@ -41,6 +41,7 @@ extension RichTextEditorContext {
             }()
             setIndentation(levelToSet: lvl, inRange: line.range)
         }
+        editor.textTracker.registerStyleChange()
     }
     
     func toggleListAttribute(listItem: ListItem?, inRange range: NSRange) {
@@ -70,18 +71,21 @@ extension RichTextEditorContext {
             setListItem(item: listItem!, in: range)
         case .delete:
             removeListItem(in: range)
+        default:
+            return
         }
         editor.attributedText.enumerateAttribute(.paragraphStyle, in: range, options: .longestEffectiveRangeNotRequired) { attrValue, range, _ in
             switch listAction {
-            case .change:
-                return
             case .add:
                 setParagraphStyle(in: range, indentLevel: 1)
             case .delete:
                 removeParagraphStyle(in: range)
+            default:
+                return
             }
         }
         editor.handleListLineChanges()
+        editor.textTracker.registerStyleChange()
     }
     
     private func setIndentation(levelToSet lvl: Int, inRange range: NSRange) {

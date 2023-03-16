@@ -19,5 +19,5 @@ enum Indentation {
     case outdent
 }
 enum EditType {
-    case delete, add, change
+    case delete, add, change, style, initinal
 }

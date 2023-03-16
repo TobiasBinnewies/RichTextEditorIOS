@@ -60,24 +60,9 @@ class EditorView: AutogrowingTextView {
     }
     
     override var keyCommands: [UIKeyCommand]? {
-        let tab = "\t"
-        let enter = "\r"
-        let b = "b"
-        let i = "i"
-        let u = "u"
-        let o = "o"
-
-        return [
-            UIKeyCommand(input: tab, modifierFlags: [], action: #selector(handleKeyCommand(command:))),
-            UIKeyCommand(input: tab, modifierFlags: .shift, action: #selector(handleKeyCommand(command:))),
-            UIKeyCommand(input: enter, modifierFlags: .shift, action: #selector(handleKeyCommand(command:))),
-            UIKeyCommand(input: enter, modifierFlags: .control, action: #selector(handleKeyCommand(command:))),
-            UIKeyCommand(input: enter, modifierFlags: .alternate, action: #selector(handleKeyCommand(command:))),
-            UIKeyCommand(input: b, modifierFlags: .command, action: #selector(handleKeyCommand(command:))),
-            UIKeyCommand(input: i, modifierFlags: .command, action: #selector(handleKeyCommand(command:))),
-            UIKeyCommand(input: u, modifierFlags: .command, action: #selector(handleKeyCommand(command:))),
-            UIKeyCommand(input: o, modifierFlags: .command, action: #selector(handleKeyCommand(command:))),
-        ]
+        return KeyboardKeys.allCases.map({ key in
+            UIKeyCommand(input: key.getString(), modifierFlags: key.getModifiers(), action: #selector(handleKeyCommand(command:)))
+        })
     }
     
     @objc
@@ -109,6 +94,7 @@ class EditorView: AutogrowingTextView {
         attributedText = initalText
         self.delegate = context
         self.textTracker.editor = self
+        self.textTracker.appendTextHistory(changeType: .initinal, changedText: "")
         layoutManager.editorView = self
         context.editor = self
         if self.textStorage.length == 0 {
@@ -224,6 +210,8 @@ class EditorView: AutogrowingTextView {
         }
         
         toolbarSelection.inFocus = inFocus
+        toolbarSelection.isUndoAvailable = textTracker.undoAvailable
+        toolbarSelection.isRedoAvailable = textTracker.redoAvailable
         
         richTextEditorContext.updateToolbarAttributes(toolbarSelection)
     }
