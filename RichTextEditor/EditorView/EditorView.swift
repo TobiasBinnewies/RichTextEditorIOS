@@ -75,6 +75,21 @@ class EditorView: AutogrowingTextView {
         richTextEditorContext.handleKeyboardInput(key: key, currentLine: currentContentLine)
     }
     
+    override func editMenu(for textRange: UITextRange, suggestedActions: [UIMenuElement]) -> UIMenu? {
+        // Replacing COPY action
+        return UIMenu(children: suggestedActions.map { menu in
+            guard let menu = menu as? UIMenu else { return menu }
+            return menu.replacingChildren(menu.children.map { command in
+                guard let command = command as? UICommand, command.action.description == "copy:" else { return command }
+                return UICommand(title: command.title, image: command.image, action: #selector(copyText))
+            })
+        })
+    }
+    
+    @objc func copyText() {
+        UIPasteboard.general.string = selectedText.string.replacingOccurrences(of: String(Character.blankLineFiller), with: "")
+    }
+    
     init(initalText: NSAttributedString, context: RichTextEditorContext, writeEnabled: Bool, onChange: @escaping ((NSAttributedString)->Void)) {
         self.isWriteEnabled = writeEnabled
         self.richTextEditorContext = context
